@@ -30,8 +30,14 @@ export class AndroidAudioService extends LinuxAudioService {
   }
 
   /**
-   * Make sure a PulseAudio daemon with the Android sink is running before the
+   * Make sure a PulseAudio daemon with an Android sink is running before the
    * first push-to-talk arrives - starting it lazily would clip the first word.
+   *
+   * Start the daemon first, then load a sink only if one is missing. Passing
+   * `--load=module-sles-sink` at startup looks tidier but is wrong: Termux's
+   * own default.pa already loads that module on most installs, so doing both
+   * produces two sinks pointing at the same output. That is not fatal, but it
+   * makes "which sink does the volume control affect?" ambiguous.
    */
   async init() {
     this.hasTermuxApi = await commandExists('termux-volume');
@@ -43,33 +49,72 @@ export class AndroidAudioService extends LinuxAudioService {
       return;
     }
 
-    try {
-      const { code } = await runCommand('pulseaudio', ['--check']);
-      if (code === 0) {
-        this.log.info('pulseaudio already running');
+    if (!(await this.#isDaemonRunning())) {
+      this.log.info('starting pulseaudio');
+      try {
+        const { code, stderr } = await runCommand(
+          'pulseaudio',
+          // Never let the daemon shut down between transmissions.
+          ['--start', '--exit-idle-time=-1'],
+          { timeoutMs: 10_000 }
+        );
+        if (code !== 0) {
+          this.log.warn('pulseaudio failed to start', { stderr: stderr.trim(), exitCode: code });
+          return;
+        }
+      } catch (err) {
+        this.log.warn('could not start pulseaudio', { error: err });
         return;
       }
-    } catch {
-      /* --check exits non-zero when not running; treat errors the same way */
     }
 
-    this.log.info('starting pulseaudio with the Android SLES sink');
+    await this.#ensureAndroidSink();
+  }
+
+  /** @returns {Promise<boolean>} */
+  async #isDaemonRunning() {
     try {
-      const { code, stderr } = await runCommand(
-        'pulseaudio',
-        [
-          '--start',
-          // Never let the daemon shut down between transmissions.
-          '--exit-idle-time=-1',
-          `--load=${SINK_MODULE} sink_name=OpenSLES_SINK`,
-        ],
-        { timeoutMs: 10_000 }
-      );
+      const { code } = await runCommand('pulseaudio', ['--check']);
+      return code === 0;
+    } catch {
+      // --check exits non-zero when not running; treat errors the same way.
+      return false;
+    }
+  }
+
+  /**
+   * Load the Android output sink only if the daemon does not already have one.
+   */
+  async #ensureAndroidSink() {
+    let sinks = '';
+    try {
+      const { code, stdout } = await runCommand('pactl', ['list', 'short', 'sinks']);
+      if (code === 0) sinks = stdout;
+    } catch {
+      /* fall through and try to load one anyway */
+    }
+
+    // Termux names it OpenSL_ES_sink by default; we name ours OpenSLES_SINK.
+    // Match on the module rather than either name so both count.
+    if (/sles/i.test(sinks)) {
+      this.log.info('android audio sink already present', {
+        sinks: sinks.trim().split('\n').length,
+      });
+      return;
+    }
+
+    this.log.info('loading the Android SLES sink');
+    try {
+      const { code, stderr } = await runCommand('pactl', [
+        'load-module',
+        SINK_MODULE,
+        'sink_name=OpenSLES_SINK',
+      ]);
       if (code !== 0) {
-        this.log.warn('pulseaudio failed to start', { stderr: stderr.trim(), exitCode: code });
+        this.log.warn('could not load the Android audio sink', { stderr: stderr.trim() });
       }
     } catch (err) {
-      this.log.warn('could not start pulseaudio', { error: err });
+      this.log.warn('could not load the Android audio sink', { error: err });
     }
   }
 

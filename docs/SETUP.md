@@ -730,8 +730,11 @@ It names the missing piece. Most common:
 
 - **Termux:** PulseAudio is not running.
   ```bash
-  $ pulseaudio --start --exit-idle-time=-1 --load="module-sles-sink sink_name=OpenSLES_SINK"
+  $ pulseaudio --start --exit-idle-time=-1
   ```
+  The receiver loads the Android output sink itself if one is missing. Do not
+  add `--load=module-sles-sink` here — Termux's default config usually loads it
+  already, and doing both leaves you with two duplicate sinks.
 - **Linux/Pi:** you are not in the `audio` group. `sudo usermod -aG audio $USER`,
   then log out and back in.
 - **Linux/Pi:** wrong card. `aplay -l`, then set `AUDIO_DEVICE=plughw:N,0`.

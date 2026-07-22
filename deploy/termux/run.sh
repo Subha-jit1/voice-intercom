@@ -49,7 +49,10 @@ fi
 if command -v pulseaudio >/dev/null 2>&1; then
   if ! pulseaudio --check 2>/dev/null; then
     echo "Starting PulseAudio..."
-    pulseaudio --start --exit-idle-time=-1 --load="module-sles-sink sink_name=OpenSLES_SINK"
+    # No --load here on purpose: Termux's default.pa usually loads the SLES
+    # sink already, and loading it again creates a duplicate sink. The receiver
+    # checks for one at startup and loads it only if it is genuinely missing.
+    pulseaudio --start --exit-idle-time=-1
   fi
 else
   # On Termux, paplay and pactl are inside the pulseaudio package - there is no
