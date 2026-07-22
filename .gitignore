@@ -1,0 +1,18 @@
+node_modules/
+.env
+.env.local
+*.log
+logs/
+
+# Desktop controller build output. The icon is generated from tools/make-icon.js
+# (npm run icon), so it is reproducible rather than committed as a binary.
+controller-desktop/dist/
+controller-desktop/build/icon.png
+certs/
+*.pem
+*.crt
+*.key
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

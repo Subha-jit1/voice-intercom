@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0f1419">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Voice Intercom</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="identity">
+    <span id="status-dot" class="dot" data-state="offline" aria-hidden="true"></span>
+    <div class="identity-text">
+      <h1 id="receiver-name">Voice Intercom</h1>
+      <p id="status-text" class="muted">No receiver selected</p>
+    </div>
+  </div>
+  <button id="add-toggle" class="icon-button" aria-label="Add a receiver" aria-expanded="false">+</button>
+</header>
+
+<!-- Receiver list -->
+<section class="panel" aria-labelledby="receivers-heading">
+  <h2 id="receivers-heading">Receivers</h2>
+  <ul id="receiver-list" class="receiver-list"></ul>
+  <p id="receiver-empty" class="muted small" hidden>
+    No receivers yet. Add one with the <strong>+</strong> button above.
+  </p>
+</section>
+
+<!-- Add receiver -->
+<section id="add-form" class="panel" hidden>
+  <h2>Add a receiver</h2>
+
+  <label for="receiver-url">Address</label>
+  <input id="receiver-url" type="text" inputmode="url" autocomplete="off"
+         spellcheck="false" placeholder="receiver.tailnet-name.ts.net:8080">
+  <p class="hint">Its Tailscale name. Plain hostnames are assumed to be https.</p>
+
+  <label for="token">Access token</label>
+  <input id="token" type="password" autocomplete="off"
+         spellcheck="false" placeholder="AUTH_TOKEN from the receiver's .env">
+
+  <button id="add-receiver" class="primary">Add receiver</button>
+  <p id="add-error" class="error" role="alert" hidden></p>
+</section>
+
+<main id="main" hidden>
+
+  <!-- Push to talk -->
+  <section class="ptt-area">
+    <button id="ptt" class="ptt" disabled aria-live="polite">
+      <span class="ptt-label">HOLD<br>TO TALK</span>
+      <span class="ptt-ring" aria-hidden="true"></span>
+    </button>
+
+    <div class="level-meter" aria-hidden="true">
+      <div id="level-bar" class="level-bar"></div>
+    </div>
+
+    <p id="ptt-hint" class="muted center">Hold the button, or hold the space bar</p>
+  </section>
+
+  <!-- Live state -->
+  <section class="stats">
+    <div class="stat">
+      <span class="stat-label">Latency</span>
+      <span id="stat-latency" class="stat-value">–</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Sent</span>
+      <span id="stat-sent" class="stat-value">–</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Channel</span>
+      <span id="stat-channel" class="stat-value">idle</span>
+    </div>
+  </section>
+
+  <!-- Receiver controls -->
+  <section class="panel">
+    <h2>Speaker</h2>
+
+    <label for="volume">Volume <span id="volume-value" class="muted">100%</span></label>
+    <input id="volume" type="range" min="0" max="100" step="5" value="100">
+
+    <div class="button-row">
+      <button id="test-speaker">Test speaker</button>
+      <button id="stop-audio" class="ghost">Stop audio</button>
+    </div>
+    <p id="audio-result" class="muted small" role="status"></p>
+  </section>
+
+  <!-- Diagnostics -->
+  <details class="panel">
+    <summary>Diagnostics</summary>
+    <div class="button-row">
+      <button id="refresh-diagnostics">Refresh</button>
+    </div>
+    <pre id="diagnostics" class="scroll">Not loaded.</pre>
+  </details>
+
+  <!-- Logs -->
+  <details class="panel">
+    <summary>Receiver logs</summary>
+    <div class="button-row">
+      <button id="refresh-logs">Refresh</button>
+      <label class="inline"><input id="follow-logs" type="checkbox"> Follow</label>
+    </div>
+    <pre id="logs" class="scroll">Not loaded.</pre>
+  </details>
+
+  <div class="button-row">
+    <button id="forget" class="ghost danger">Remove this receiver</button>
+  </div>
+</main>
+
+<!-- Desktop-only: shown by app.js when running inside the Electron shell. -->
+<section id="desktop-panel" class="panel" hidden>
+  <h2>Desktop</h2>
+  <p class="muted small">
+    Global hotkey <kbd id="hotkey-label">F8</kbd> toggles transmission from any
+    window. Hold-to-talk works inside this window with the button or space bar.
+  </p>
+  <label class="inline">
+    <input id="launch-at-login" type="checkbox"> Start when I log in
+  </label>
+</section>
+
+<script src="app.js" type="module"></script>
+</body>
+</html>

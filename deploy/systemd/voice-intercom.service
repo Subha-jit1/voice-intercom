@@ -1,0 +1,80 @@
+# voice-intercom receiver - systemd unit
+#
+# Used on Raspberry Pi OS, Debian and Ubuntu. This file is the ONLY thing that
+# differs between those and the Termux development setup; the application it
+# starts is byte-for-byte identical.
+#
+# Install:
+#   sudo cp deploy/systemd/voice-intercom.service /etc/systemd/system/
+#   sudo systemctl edit --full voice-intercom     # fix User= and paths if needed
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now voice-intercom
+#
+# Follow the logs:
+#   journalctl -u voice-intercom -f
+
+[Unit]
+Description=voice-intercom receiver
+Documentation=https://github.com/your-org/voice-intercom
+
+# sound.target ensures ALSA has enumerated devices before we open one.
+# tailscaled is listed so that on a normal boot the tailnet is already up when
+# we start - but it is only Wants/After, never Requires, because the receiver
+# is perfectly usable over plain LAN if Tailscale is down.
+After=network-online.target sound.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# Must be a member of the `audio` group, or opening the ALSA device fails:
+#   sudo usermod -aG audio pi
+User=pi
+Group=pi
+SupplementaryGroups=audio
+
+WorkingDirectory=/home/pi/voice-intercom
+ExecStart=/usr/bin/node receiver/src/index.js
+
+# Configuration lives in .env, read by the app itself - see docs/SETUP.md.
+Environment=NODE_ENV=production
+
+# --- Always-on behaviour ---------------------------------------------------
+Restart=always
+RestartSec=3
+
+# Never give up. The default start limit would permanently stop a receiver
+# that crash-looped - for example because a USB speaker was unplugged - and it
+# would then stay dead after the speaker was plugged back in.
+StartLimitIntervalSec=0
+
+# Log to the journal as JSON lines, exactly as it does on stdout in Termux.
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=voice-intercom
+
+# --- Hardening -------------------------------------------------------------
+# The receiver needs the network, a sound device, and its own directory.
+# Nothing else.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/pi/voice-intercom
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+# Sound devices live in /dev/snd; DeviceAllow keeps the rest of /dev away.
+PrivateDevices=false
+DeviceAllow=/dev/snd rw
+
+# A Pi Zero 2 W has 512 MB. Cap the receiver well below that so a runaway
+# process cannot take the board down with it.
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

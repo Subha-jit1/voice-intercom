@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Voice Intercom">
+  <rect width="512" height="512" rx="112" fill="#0f1419"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#3fb950" stroke-width="14" opacity="0.35"/>
+  <g fill="#3fb950">
+    <rect x="216" y="120" width="80" height="150" rx="40"/>
+    <path d="M164 246a12 12 0 0 1 24 0 68 68 0 0 0 136 0 12 12 0 0 1 24 0 92 92 0 0 1-80 91v39h34a12 12 0 0 1 0 24h-92a12 12 0 0 1 0-24h34v-39a92 92 0 0 1-80-91z"/>
+  </g>
+</svg>

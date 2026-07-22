@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Voice Intercom">
+  <!-- Maskable: all content kept inside the safe zone (centre 80%) so Android
+       can crop this to a circle, squircle or rounded square without clipping. -->
+  <rect width="512" height="512" fill="#0f1419"/>
+  <g fill="#3fb950" transform="translate(256 256) scale(0.66) translate(-256 -256)">
+    <rect x="216" y="120" width="80" height="150" rx="40"/>
+    <path d="M164 246a12 12 0 0 1 24 0 68 68 0 0 0 136 0 12 12 0 0 1 24 0 92 92 0 0 1-80 91v39h34a12 12 0 0 1 0 24h-92a12 12 0 0 1 0-24h34v-39a92 92 0 0 1-80-91z"/>
+  </g>
+</svg>

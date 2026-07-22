@@ -1,0 +1,34 @@
+# voice-intercom watchdog
+#
+# Restart=always in the main unit handles a receiver that *crashes*. This
+# handles the rarer and nastier case: a receiver that is still running but has
+# stopped answering — a wedged event loop, a stuck audio device, a socket that
+# never closed. Without this, such a receiver looks alive to systemd and stays
+# broken until someone notices there is no intercom.
+#
+# It asks the receiver the same question a monitoring system would, over
+# loopback, and restarts it if there is no healthy answer.
+#
+# Install (with the timer, which is what actually schedules it):
+#   sudo cp deploy/systemd/voice-intercom-watchdog.* /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now voice-intercom-watchdog.timer
+
+[Unit]
+Description=voice-intercom health check
+After=voice-intercom.service
+
+[Service]
+Type=oneshot
+
+# If you changed PORT in .env, change it here too.
+Environment=HEALTH_URL=http://127.0.0.1:8080/api/health
+
+# /api/health is deliberately unauthenticated so this needs no token.
+# `|| systemctl restart` fires on any failure: connection refused, timeout,
+# or a non-2xx response.
+ExecStart=/bin/sh -c '\
+  if ! curl -fsS --max-time 5 "$HEALTH_URL" >/dev/null 2>&1; then \
+    echo "health check failed, restarting voice-intercom"; \
+    systemctl restart voice-intercom; \
+  fi'

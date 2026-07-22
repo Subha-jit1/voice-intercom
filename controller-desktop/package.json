@@ -1,0 +1,64 @@
+{
+  "name": "voice-intercom-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Desktop push-to-talk controller for voice-intercom receivers.",
+  "main": "main.js",
+  "scripts": {
+    "start": "node dev.js",
+    "icon": "node ../tools/make-icon.js build/icon.png",
+    "predist": "npm run icon",
+    "predist:linux": "npm run icon",
+    "predist:win": "npm run icon",
+    "dist": "electron-builder",
+    "dist:linux": "electron-builder --linux",
+    "dist:win": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^34.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "net.voiceintercom.controller",
+    "productName": "Voice Intercom",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.cjs",
+      "build/icon.png"
+    ],
+    "extraResources": [
+      {
+        "from": "../controller",
+        "to": "controller",
+        "filter": [
+          "**/*",
+          "!sw.js"
+        ]
+      }
+    ],
+    "linux": {
+      "target": [
+        "deb",
+        "AppImage"
+      ],
+      "category": "Network",
+      "icon": "build/icon.png",
+      "synopsis": "Push-to-talk intercom controller",
+      "description": "Talk to voice-intercom receivers over Tailscale."
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

@@ -1,0 +1,20 @@
+# Schedule for the voice-intercom health check.
+#
+#   sudo systemctl enable --now voice-intercom-watchdog.timer
+#   systemctl list-timers voice-intercom-watchdog.timer
+
+[Unit]
+Description=Run the voice-intercom health check every minute
+
+[Timer]
+# Give the receiver time to come up after a boot before judging it.
+OnBootSec=2min
+OnUnitActiveSec=1min
+
+# The check is cheap but not urgent; letting systemd batch it saves wakeups,
+# which matters on a battery-backed or solar Pi.
+AccuracySec=15s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

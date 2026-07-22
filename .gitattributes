@@ -1,0 +1,15 @@
+# The receiver is authored on any OS but runs on Android, Debian and Raspberry
+# Pi OS. A CRLF line ending in a shell script makes bash fail with the
+# famously unhelpful "\r: command not found", and a CRLF in a systemd unit is
+# silently ignored. Pin them to LF regardless of the developer's platform or
+# core.autocrlf setting.
+
+* text=auto eol=lf
+
+*.sh        text eol=lf
+*.service   text eol=lf
+.env.example text eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
