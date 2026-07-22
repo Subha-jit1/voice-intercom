@@ -8,6 +8,7 @@ logs/
 # (npm run icon), so it is reproducible rather than committed as a binary.
 controller-desktop/dist/
 controller-desktop/build/icon.png
+docs/personal-notes/
 certs/
 *.pem
 *.crt
