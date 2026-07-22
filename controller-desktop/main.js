@@ -20,6 +20,7 @@ const {
   app, BrowserWindow, Menu, Tray, globalShortcut, ipcMain, nativeImage, protocol, shell,
 } = require('electron');
 const { readFile } = require('node:fs/promises');
+const os = require('node:os');
 const { extname, join, normalize, resolve, sep } = require('node:path');
 
 /**
@@ -198,7 +199,14 @@ function toggleTransmit() {
 
 // --- IPC --------------------------------------------------------------------
 
-ipcMain.handle('desktop:info', () => ({ platform: process.platform, hotkey: HOTKEY }));
+// hostname feeds the default controller name (controller/identity.js) - a
+// machine's own name is a better default than a randomly generated one, since
+// it already tells other controllers which physical device is talking.
+ipcMain.handle('desktop:info', () => ({
+  platform: process.platform,
+  hotkey: HOTKEY,
+  hostname: os.hostname(),
+}));
 
 // The renderer is the authority on whether audio is actually flowing - the
 // hotkey only requests it, and the receiver can refuse.

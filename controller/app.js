@@ -13,6 +13,7 @@
 import { Connection } from './connection.js';
 import { MicCapture } from './mic.js';
 import { ReceiverStore, receiverApi, websocketUrl } from './receivers.js';
+import { ensureControllerName, getControllerName, setControllerName } from './identity.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -54,6 +55,8 @@ const els = {
 
   forget: $('forget'),
 
+  controllerName: $('controller-name'),
+
   desktopPanel: $('desktop-panel'),
   hotkeyLabel: $('hotkey-label'),
   launchAtLogin: $('launch-at-login'),
@@ -76,6 +79,8 @@ let connectedId = null;
 // --- Connection -------------------------------------------------------------
 
 const connection = new Connection({
+  getName: () => getControllerName(),
+
   onStatus: (status, detail) => {
     els.statusDot.dataset.state = status;
     els.statusText.textContent =
@@ -236,6 +241,17 @@ function describeReceiver(receiver) {
 store.subscribe(() => {
   renderReceivers();
   syncConnection();
+});
+
+// --- Controller identity -----------------------------------------------------
+
+els.controllerName.addEventListener('change', () => {
+  const saved = setControllerName(els.controllerName.value);
+  els.controllerName.value = saved; // reflect trimming/fallback immediately
+  // Re-announce rather than reconnect: the server treats a second `hello` as
+  // a rename, so everyone else's "busy" display updates without dropping the
+  // floor or interrupting anyone mid-transmission.
+  if (connection.isOpen) connection.announce();
 });
 
 // --- Add receiver -----------------------------------------------------------
@@ -526,6 +542,12 @@ if (desktop) {
 }
 
 // --- Boot -------------------------------------------------------------------
+
+// Resolved before anything connects: on the desktop shell, ensureControllerName()
+// waits for the real hostname to arrive over IPC on a fresh install, so the
+// default name is never permanently locked in as a random one just because the
+// IPC round-trip hadn't finished yet (see identity.js and preload.cjs).
+els.controllerName.value = await ensureControllerName();
 
 renderReceivers();
 syncConnection();

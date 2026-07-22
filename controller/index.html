@@ -25,6 +25,15 @@
   <button id="add-toggle" class="icon-button" aria-label="Add a receiver" aria-expanded="false">+</button>
 </header>
 
+<!-- Controller identity. Matters most with several controllers on one
+     receiver: this name is what "busy - Kitchen phone is talking" shows
+     instead of everyone appearing as the same generic "controller". -->
+<section class="panel">
+  <label for="controller-name">Your name <span class="muted">(shown to other controllers)</span></label>
+  <input id="controller-name" type="text" autocomplete="off" spellcheck="false"
+         maxlength="40" placeholder="e.g. Kitchen phone">
+</section>
+
 <!-- Receiver list -->
 <section class="panel" aria-labelledby="receivers-heading">
   <h2 id="receivers-heading">Receivers</h2>

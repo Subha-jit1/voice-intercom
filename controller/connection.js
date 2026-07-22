@@ -24,6 +24,12 @@ export class Connection {
    * @param {(info: any) => void} handlers.onEnded
    * @param {(ms: number) => void} handlers.onLatency
    * @param {(reason: string) => void} handlers.onAuthFailure
+   * @param {() => string} handlers.getName
+   *   Called each time a `hello` is sent, so the connection never has to
+   *   decide on its own what "controller" means - the previous hardcoded
+   *   'phone'/'controller' string made every device on this platform
+   *   indistinguishable to everyone else, which stops mattering with one
+   *   controller and becomes a real problem with five or six.
    */
   constructor(handlers) {
     this.handlers = handlers;
@@ -91,7 +97,7 @@ export class Connection {
     socket.onopen = () => {
       this.attempt = 0;
       this.handlers.onStatus('online');
-      this.send({ type: 'hello', name: navigator.userAgent.includes('Android') ? 'phone' : 'controller' });
+      this.announce();
       this.#startPinging();
     };
 
@@ -188,6 +194,16 @@ export class Connection {
     if (this.socket.bufferedAmount > 64 * 1024) return false;
     this.socket.send(buffer);
     return true;
+  }
+
+  /**
+   * (Re-)send `hello` with the current name. Called on connect, and again
+   * whenever the user edits their name while already connected - the server
+   * treats a second `hello` as a rename and rebroadcasts state, so every other
+   * controller's "busy" display picks it up live rather than on next reconnect.
+   */
+  announce() {
+    return this.send({ type: 'hello', name: this.handlers.getName() });
   }
 
   requestFloor(format) {
