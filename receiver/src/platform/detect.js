@@ -39,14 +39,23 @@ function readTextOrNull(path) {
 }
 
 /**
- * Termux exposes itself through its prefix path and, on recent versions, an
- * explicit TERMUX_VERSION variable. We check several signals because users
- * run the receiver from systemd-like supervisors that strip the environment.
+ * Is this Termux on Android?
+ *
+ * Two independent signals, and both are needed:
+ *
+ *   - `process.platform === 'android'`. Current Node builds shipped by Termux
+ *     report this. Anything that only tests for 'linux' silently misidentifies
+ *     the phone and falls back to a silent audio backend.
+ *   - Termux's own markers. Older Node builds report 'linux' instead, so the
+ *     prefix path and TERMUX_VERSION still have to be checked.
+ *
+ * @param {string} platform  process.platform
+ * @param {NodeJS.ProcessEnv} env
  */
-function detectTermux() {
-  if (process.env.TERMUX_VERSION) return true;
-  const prefix = process.env.PREFIX || '';
-  if (prefix.includes('com.termux')) return true;
+function detectTermux(platform, env) {
+  if (platform === 'android') return true;
+  if (env.TERMUX_VERSION) return true;
+  if ((env.PREFIX || '').includes('com.termux')) return true;
   if (existsSync('/data/data/com.termux/files/usr')) return true;
   return false;
 }
@@ -72,56 +81,66 @@ let cached = null;
 
 /**
  * Detect the current platform.
+ *
+ * @param {{platform?: string, arch?: string, env?: NodeJS.ProcessEnv}} [overrides]
+ *   Test seam only. When supplied, the result is neither read from nor written
+ *   to the cache, so tests cannot poison the real detection.
  * @returns {PlatformInfo}
  */
-export function detectPlatform() {
-  if (cached) return cached;
+export function detectPlatform(overrides) {
+  if (!overrides && cached) return cached;
 
-  const base = {
-    os: process.platform,
-    arch: process.arch,
-    kernel: os.release(),
+  const platform = overrides?.platform ?? process.platform;
+  const arch = overrides?.arch ?? process.arch;
+  const env = overrides?.env ?? process.env;
+
+  const base = { os: platform, arch, kernel: os.release() };
+
+  /** @param {PlatformInfo} info */
+  const finish = (info) => {
+    if (!overrides) cached = info;
+    return info;
   };
 
-  if (process.platform === 'linux') {
-    const isTermux = detectTermux();
-    if (isTermux) {
-      cached = {
-        ...base,
-        id: 'android',
-        label: `Android / Termux (${process.arch})`,
-        isTermux: true,
-        isRaspberryPi: false,
-        model: readTextOrNull('/proc/device-tree/model'),
-      };
-      return cached;
-    }
+  // Android first: a Termux install reports platform 'android' on current Node
+  // builds and 'linux' on older ones, so this check has to come before the
+  // Linux branch or phones get classified as generic Linux (or, worse, as
+  // unknown - which is what shipped and left every phone silent).
+  if (detectTermux(platform, env)) {
+    return finish({
+      ...base,
+      id: 'android',
+      label: `Android / Termux (${arch})`,
+      isTermux: true,
+      isRaspberryPi: false,
+      model: readTextOrNull('/proc/device-tree/model'),
+    });
+  }
 
+  if (platform === 'linux') {
     const { isPi, model } = detectRaspberryPi();
-    cached = {
+    return finish({
       ...base,
       id: isPi ? 'raspberrypi' : 'linux',
-      label: isPi ? `${model} (${process.arch})` : `Linux ${os.release()} (${process.arch})`,
+      label: isPi ? `${model} (${arch})` : `Linux ${os.release()} (${arch})`,
       isTermux: false,
       isRaspberryPi: isPi,
       model,
-    };
-    return cached;
+    });
   }
 
   /** @type {Record<string, PlatformId>} */
-  const nonLinux = { win32: 'windows', darwin: 'macos' };
-  const id = nonLinux[process.platform] ?? 'unknown';
+  const others = { win32: 'windows', darwin: 'macos' };
+  const id = others[platform] ?? 'unknown';
 
-  cached = {
+  return finish({
     ...base,
     id,
-    label: `${id} ${os.release()} (${process.arch})`,
+    label: `${id === 'unknown' ? platform : id} ${os.release()} (${arch})`,
     isTermux: false,
     isRaspberryPi: false,
     model: null,
-  };
-  return cached;
+  });
 }
 
 /** Test seam: forget the cached detection result. */

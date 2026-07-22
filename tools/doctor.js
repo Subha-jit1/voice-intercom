@@ -118,10 +118,30 @@ heading('Verdict');
 if (probe.available && audio.name !== 'null') {
   process.stdout.write('  Audio is ready. Start the receiver with: npm start\n\n');
 } else if (audio.name === 'null') {
-  process.stdout.write(
-    '  Running with the null audio backend - every feature except sound will\n' +
-      '  work. This is expected on Windows/macOS and fine for development.\n\n'
-  );
+  // The null backend is correct on a desktop OS and a bug anywhere else, so
+  // say which case this is rather than reassuring the user either way.
+  const expected = ['windows', 'macos'].includes(platform.id);
+  if (expected) {
+    process.stdout.write(
+      '  Running with the null audio backend - every feature except sound will\n' +
+        '  work. This is expected on Windows/macOS and fine for development.\n\n'
+    );
+  } else if (audioConfig.backend === 'null') {
+    process.stdout.write(
+      '  The null backend was forced by AUDIO_BACKEND=null in .env.\n' +
+        '  Remove that line (or set AUDIO_BACKEND=auto) to enable sound.\n\n'
+    );
+  } else {
+    process.stdout.write(
+      `  PROBLEM: this is ${platform.id === 'unknown' ? 'an unrecognised platform' : platform.label},\n` +
+        '  which should support real audio, but the null backend was selected -\n' +
+        '  so nothing will ever come out of the speaker.\n\n' +
+        '  Most likely the audio tools are missing. Install them:\n' +
+        '    Termux            pkg install pulseaudio\n' +
+        '    Debian/Ubuntu/Pi  sudo apt install alsa-utils\n\n' +
+        '  If they are already installed, please report this output as a bug.\n\n'
+    );
+  }
 } else {
   process.stdout.write('  Audio is NOT ready. See the detail above.\n\n');
 }
