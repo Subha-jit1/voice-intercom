@@ -52,7 +52,9 @@ if command -v pulseaudio >/dev/null 2>&1; then
     pulseaudio --start --exit-idle-time=-1 --load="module-sles-sink sink_name=OpenSLES_SINK"
   fi
 else
-  echo "WARNING: pulseaudio not installed (pkg install pulseaudio pulseaudio-utils)."
+  # On Termux, paplay and pactl are inside the pulseaudio package - there is no
+  # separate pulseaudio-utils, that is a Debian name.
+  echo "WARNING: pulseaudio not installed (pkg install pulseaudio)."
 fi
 
 # --- Supervise --------------------------------------------------------------

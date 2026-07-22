@@ -10,7 +10,10 @@
  * Linux desktop does. So this class inherits the entire Linux implementation
  * and adds only the Android-specific bootstrap and volume control.
  *
- *   pkg install pulseaudio pulseaudio-utils
+ *   pkg install pulseaudio
+ *
+ * Note the package name: on Termux, paplay and pactl ship inside `pulseaudio`
+ * itself. `pulseaudio-utils` is a Debian name and does not exist here.
  */
 
 import { LinuxAudioService } from './LinuxAudioService.js';
@@ -35,7 +38,7 @@ export class AndroidAudioService extends LinuxAudioService {
 
     if (!(await commandExists('pulseaudio'))) {
       this.log.warn('pulseaudio not installed; audio playback will fail', {
-        fix: 'pkg install pulseaudio pulseaudio-utils',
+        fix: 'pkg install pulseaudio',
       });
       return;
     }
@@ -124,8 +127,8 @@ export class AndroidAudioService extends LinuxAudioService {
         available: false,
         tools,
         detail:
-          'PulseAudio is required on Termux. Install it with: ' +
-          'pkg install pulseaudio pulseaudio-utils',
+          'PulseAudio is required on Termux. Install it with: pkg install pulseaudio ' +
+          '(paplay and pactl are inside that package; there is no pulseaudio-utils on Termux)',
       };
     }
 

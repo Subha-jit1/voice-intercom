@@ -55,11 +55,13 @@ async function chooseLinuxBackend(platform) {
     }
   }
 
+  // Only reached on Linux/Raspberry Pi - Termux is dispatched before this - so
+  // apt package names are the correct advice here.
   return {
     backend: 'null',
     reason:
-      `no audio tools found on ${platform.label}. ` +
-      `Install alsa-utils (aplay) or pulseaudio-utils (paplay) to enable sound.`,
+      `no audio tools found on ${platform.label}. Enable sound with ` +
+      `"sudo apt install alsa-utils" (aplay) or "sudo apt install pulseaudio-utils" (paplay).`,
   };
 }
 

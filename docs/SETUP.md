@@ -122,17 +122,61 @@ Do **2A** or **2B**, not both.
 
 Use a phone you can leave plugged in. It will be your receiver.
 
-#### 2A.1 Install Termux — from F-Droid, not the Play Store
+#### 2A.1 Install Termux — from GitHub
 
-The Play Store version is abandoned and its packages are too old to work.
+You need three apps. **Do not use the Play Store version** — the Termux project
+abandoned it years ago because Android's policy changes broke it, and its
+packages are too old to work.
 
-1. Install **F-Droid** from [f-droid.org](https://f-droid.org).
-2. In F-Droid, install **Termux**.
-3. In F-Droid, install **Termux:API** (provides the wake lock).
-4. In F-Droid, install **Termux:Boot** (starts the receiver at boot).
-5. **Open Termux:Boot once.** It shows a blank screen — that is correct.
-   Android will not grant boot permission until the app has been launched at
-   least once.
+Two official sources exist. Pick one and use it for **all three** apps:
+
+| Source | Signed by | Notes |
+| --- | --- | --- |
+| **GitHub Releases** | the Termux developers | Straight from the project. Recommended. |
+| F-Droid | F-Droid's build servers | Also official, but F-Droid rebuilds and re-signs with its own key. |
+
+If you would rather not add F-Droid, use GitHub — you lose nothing. The APKs
+there are built and signed by the Termux developers themselves, with no third
+party in between.
+
+> ### ⚠ All three apps must come from the same source
+>
+> Android only lets apps talk to each other when their signatures match. The
+> F-Droid and GitHub builds are signed with **different keys**, so mixing them
+> means Termux:API and Termux:Boot install fine and then silently do nothing —
+> no error, just a wake lock that never works and a receiver that never starts
+> at boot.
+>
+> If you already have Termux from one source, uninstall it before switching.
+
+**Download from these three pages:**
+
+1. **Termux** — [github.com/termux/termux-app/releases](https://github.com/termux/termux-app/releases)
+2. **Termux:API** — [github.com/termux/termux-api/releases](https://github.com/termux/termux-api/releases) (provides the wake lock)
+3. **Termux:Boot** — [github.com/termux/termux-boot/releases](https://github.com/termux/termux-boot/releases) (starts the receiver at boot)
+
+On each page, open the newest release and download the `.apk` from **Assets**.
+Choose the `universal` file if there is one — it works on every phone. If only
+per-architecture files are listed, `arm64-v8a` is right for any phone made in
+roughly the last seven years.
+
+> The filenames contain the word `debug` (for example
+> `termux-app_…-github-debug_universal.apk`). That is normal and expected — it
+> is how the Termux project labels its GitHub build channel, not a test build.
+
+**Then install them:**
+
+Android will ask permission for your browser to install unknown apps the first
+time — allow it, then install all three APKs.
+
+Finally: **open Termux:Boot once.** It shows a blank screen; that is correct.
+Android will not grant boot permission until the app has been launched at least
+once.
+
+> **Would you rather skip Termux entirely?** You do not have to use a phone as
+> the receiver. Any spare Linux machine — an old laptop, a mini PC, a Raspberry
+> Pi you already own — works today with **Option 2B** below, and needs none of
+> this. The receiver software is identical either way.
 
 #### 2A.2 Get the code
 
@@ -185,8 +229,12 @@ You want:
 If `Usable` says `NO`, the report names the missing package. Usually:
 
 ```bash
-$ pkg install pulseaudio pulseaudio-utils
+$ pkg install pulseaudio
 ```
+
+> On Termux, `paplay` and `pactl` are part of the **`pulseaudio`** package.
+> There is no `pulseaudio-utils` here — that is a Debian/Ubuntu package name,
+> and asking for it gives `E: Unable to locate package pulseaudio-utils`.
 
 #### 2A.5 Start it
 

@@ -2,9 +2,13 @@
 #
 # Start the receiver automatically when the phone boots.
 #
-# Requires the Termux:Boot add-on, installed from the same source as Termux
-# itself (F-Droid). Termux:Boot runs every executable script in
-# ~/.termux/boot/ after the device starts.
+# Requires the Termux:Boot add-on. It MUST come from the same source as Termux
+# itself - GitHub Releases or F-Droid, not one of each. Android only lets the
+# apps talk to each other when their signatures match, and the two channels use
+# different keys; mixed installs fail silently. See docs/SETUP.md 2A.1.
+#
+# Termux:Boot runs every executable script in ~/.termux/boot/ after the device
+# starts.
 #
 # Install:
 #   mkdir -p ~/.termux/boot
